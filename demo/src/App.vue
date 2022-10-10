@@ -7,7 +7,7 @@
       <div class="lets-play">
      
         <VueSvgGauge
-          class="customizable-gauge"
+          class="customizable-gauge tachometer-main"
           :start-angle="parseInt(startAngle || 130)"
           :end-angle="parseInt(endAngle || -130)"
           :value="parseInt(value)"
@@ -18,6 +18,10 @@
           :inner-radius="parseInt(innerRadius)"
           :separator-thickness="parseInt(separatorThickness)"
           :base-color="baseColor"
+          :main-radius="parseInt(mainRadius)"
+          :center="parseInt(mainRadius)"
+          :diff="0"
+          :is-value="true"
           :gauge-color="[ { offset: 0, color: '#FD2232' },
           { offset: 150, color: '#FCEC68' },
           { offset: 594, color: '#6FE566' },
@@ -25,7 +29,33 @@
           { offset: 999, color: '#fff' }]"
           :easing="easing"
         />
+
         
+        <VueSvgGauge
+          class="customizable-gauge tachometer-scale"
+          :start-angle="parseInt(startAngle || 130)"
+          :end-angle="parseInt(endAngle || -130)"
+          :value="parseInt(value)"
+          :separator-step="parseInt(separatorStep)"
+          :min="parseInt(min || 0)"
+          :max="parseInt(max || 100)"
+          :scale-interval="parseInt(scale)"
+          :center="parseInt(mainRadius + 7)"
+          :inner-radius="parseInt('118')"
+          :main-radius="parseInt('122')"
+          :diff="8"
+          :is-value="false"
+          :separator-thickness="parseInt(separatorThickness)"
+          :base-color="baseColor"
+          :gauge-color="[ { offset: 0, color: '#FD2232' },
+          { offset: 150, color: '#FCEC68' },
+          { offset: 594, color: '#6FE566' },
+          { offset: 904, color: '#5BB657' }]"
+          :easing="easing"
+        />
+
+
+      
       
       </div>
     </div>
@@ -45,9 +75,10 @@
         min: 0,
         max: 999,
         scale: 5,
-        innerRadius: 65,
+        innerRadius: 70,
+        mainRadius: 114,
         separatorThickness: 4,
-        baseColor: '#d0cdcd',
+        baseColor: '#fff',
         easingFct: 'Circular',
         easingType: 'Out',
         random: 30,
@@ -147,6 +178,7 @@
     }
 
     .lets-play {
+      position relative
       display: flex
       flex-direction: column
       justify-content: center
@@ -157,9 +189,7 @@
         margin-top: 0
       }
 
-      .customizable-gauge {
-        max-width: 300px
-      }
+    
 
       .customizer-title {
         font-size: 20px
@@ -283,5 +313,24 @@
     	border-style: solid
     	pointer-events: none
     }
+  }
+
+   /*  .customizable-gauge {
+        max-width: 240px
+      }
+ */
+  #app .lets-play .tachometer-scale {
+    position: absolute
+    top: 50%
+    left: 50%
+    transform: translate(-137px, -121px);
+    margin-top: -1px
+}
+
+</style>
+
+<style>
+  .tachometer-main {
+    background-image: url('/src/img/scale.svg')
   }
 </style>
