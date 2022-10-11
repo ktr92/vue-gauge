@@ -1,20 +1,60 @@
 <template>
-  <div class="gauge">
+  <div class="gauge" :style="{maxWidth: `${RADIUS * 2 + diff*3 + 'px'}`}">
     <svg
       v-if="height"
-      :viewBox="`0 0 ${RADIUS * 2} ${height}`" height="100%" width="100%"
+      :viewBox="`0 0 ${RADIUS * 2 - diff} ${RADIUS * 2 - diff}`" height="100%" width="100%"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
         <!-- This puts an inner shadow on the empty part of gauge -->
         <filter :id="`innershadow-${_uid}`">
-          <feFlood flood-color="#c7c6c6" />
+          <!-- <feFlood flood-color="#ECEEF6" />
           <feComposite in2="SourceAlpha" operator="out" />
-          <feGaussianBlur stdDeviation="2" result="blur" />
-          <feComposite operator="atop" in2="SourceGraphic" />
+          <feGaussianBlur stdDeviation="0" result="blur" />
+          <feComposite operator="atop" in2="SourceGraphic" /> -->
+
+           <feOffset
+              dx='0'
+              dy='0'
+            />
+
+            <!-- Shadow blur -->
+            <feGaussianBlur
+              stdDeviation='26  '
+              result='offset-blur'
+            />
+
+            <!-- Invert drop shadow to make an inset shadow -->
+            <feComposite
+              operator='out'
+              in='SourceGraphic'
+              in2='offset-blur'
+              result='inverse'
+            />
+            
+            <!-- Cut color inside shadow -->
+            <feFlood
+              flood-color='#ECEEF6'
+              flood-opacity='1'
+              result='color'
+            />
+            <feComposite
+              operator='in'
+              in='color'
+              in2='inverse'
+              result='shadow'
+            />
+
+            <!-- Placing shadow over element -->
+            <feComposite
+              operator='over'
+              in='shadow'
+              in2='SourceGraphic'
+              result='shadow'
+            />
         </filter>
 
-.
+
 
         <!-- Determine the gradient color on the full part of the gauge -->
         <template v-if="hasGradient">
@@ -34,10 +74,10 @@
         <mask :id="`innerCircle-${_uid}`">
           <!-- Mask to make sure only the part inside the circle is visible -->
           <!-- RADIUS - 0.5 to avoid any weird display -->
-          <circle :r="RADIUS - 0.5" :cx="X_CENTER" :cy="Y_CENTER" fill="white" />
+          <circle :r="RADIUS - 0.5" :cx="this.X_CENTER" :cy="this.Y_CENTER" fill="white" />
 
           <!-- Mask to remove the inside of the gauge -->
-          <circle :r="innerRadius" :cx="X_CENTER" :cy="Y_CENTER" fill="black" />
+          <circle :r="innerRadius" :cx="this.X_CENTER" :cy="this.Y_CENTER" fill="black" />
 
           <template v-if="separatorPaths">
             <!-- Mask for each separator -->
@@ -50,11 +90,11 @@
         </mask>
       </defs>
 
-      <g :mask="`url(#innerCircle-${_uid})`">
+     <g :mask="`url(#innerCircle-${_uid})`"> 
         <!-- Draw a circle if the full gauge has a 360° angle, otherwise draw a path -->
         <circle
           v-if="isCircle"
-          :r="RADIUS" :cx="X_CENTER" :cy="Y_CENTER"
+          :r="RADIUS" :cx="this.X_CENTER" :cy="this.Y_CENTER"
           :fill="hasGradient ? `url(#gaugeGradient-${_uid})` : gaugeColor"
         />
         <path
@@ -69,12 +109,15 @@
        
 
         <!-- Draw a circle if the empty gauge has a 360° angle, otherwise draw a path -->
-        <!-- <circle
+        <circle
           v-if="value === min && isCircle"
           :r="RADIUS" :cx="X_CENTER" :cy="Y_CENTER"
           :fill="baseColor"
         />
-        <path v-else :d="gaugePath" :fill="baseColor" :filter="`url(#innershadow-${_uid})`" /> -->
+        <template v-else>
+           <path v-if="isValue === true" :d="gaugePathCover" :fill="baseColor" :filter="`url(#innershadow-${_uid})`" />
+        </template>
+       
       </g>
 
       <template v-if="scaleLines">
@@ -100,11 +143,10 @@
   import _get from 'lodash/get'
 
   // Main radius of the gauge
-  const RADIUS = 100
 
   // Coordinates of the center based on the radius
-  const X_CENTER = 100
-  const Y_CENTER = 100
+/*   const X_CENTER = 100
+  const Y_CENTER = 100 */
 
   /**
    * Turn polar coordinate to cartesians
@@ -112,14 +154,16 @@
    * @param   {Number} centerY - ordinate of the center
    * @param   {Number} radius  - radius of the circle
    * @param   {Number} angle   - angle in degres
+   * @param   {Number} xcenter   
+   * @param   {Number} ycenter   
    * @returns {String}         - d property of the path
    */
-  function polarToCartesian(radius, angle) {
+  function polarToCartesian(xcenter, ycenter, radius, angle) {
     const angleInRadians = (angle - 90) * Math.PI / 180
 
     return {
-      x: X_CENTER + (radius * Math.cos(angleInRadians)),
-      y: Y_CENTER + (radius * Math.sin(angleInRadians)),
+      x: xcenter + (radius * Math.cos(angleInRadians)),
+      y: ycenter + (radius * Math.sin(angleInRadians)),
     }
   }
 
@@ -130,19 +174,56 @@
    * @param   {Number} endAngle   - in degre
    * @returns {String}            - d property of the path
    */
-  function describePath(radius, startAngle, endAngle) {
-    const start = polarToCartesian(radius, endAngle)
-    const end = polarToCartesian(radius, startAngle)
+  function describePath(xcenter, ycenter, radius, startAngle, endAngle) {
+    const start = polarToCartesian(xcenter, xcenter, radius, endAngle)
+    const end = polarToCartesian(xcenter, xcenter, radius, startAngle)
 
     const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
 
     const d = [
       'M', start.x, start.y,
       'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y,
-      'L', X_CENTER, Y_CENTER,
+      'L', xcenter, ycenter,
     ].join(' ')
 
     return d
+  }
+
+  function describePathCover(mainR, innerR, xcenter, ycenter, radius, startAngle, endAngle) {
+    const start = polarToCartesian(xcenter, xcenter, radius, endAngle)
+    const end = polarToCartesian(xcenter, xcenter, radius, startAngle)
+
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
+
+    const angle = endAngle - startAngle
+
+    const w = mainR - innerR
+
+   /*  const d = [
+      'M', start.x, start.y,
+      'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+      'L', polarToCartesian(xcenter, xcenter, radius - w , startAngle).x,
+           polarToCartesian(xcenter, xcenter, radius - w, startAngle).y,
+      'A', radius, radius, 0, largeArcFlag, 1, polarToCartesian(xcenter, xcenter, innerR, endAngle).x,
+           polarToCartesian(xcenter, xcenter, innerR, endAngle).y,
+
+    ].join(' ') */
+
+     const d = [
+      'M', start.x, start.y,
+      'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+      'L', xcenter, ycenter,
+    ].join(' ')
+
+    return d
+  }
+
+  function getCoordFromDegrees(angle, radius, svgSize) {
+    const x = Math.cos(angle * Math.PI / 180);
+    const y = Math.sin(angle * Math.PI / 180);
+    const coordX = x * radius + svgSize / 2;
+    const coordY = y * -radius + svgSize / 2;
+    return [coordX, coordY].join(' ');
   }
 
   export default {
@@ -168,6 +249,10 @@
       max: {
         type: Number,
         default: 100,
+      },
+      isValue: {
+        type: Boolean,
+        default: false
       },
       /**
        * Must be between -360 and 360
@@ -203,13 +288,14 @@
        */
       innerRadius: {
         type: Number,
-        default: 60,
-        validator: (value) => {
-          if (value < 0 || value > 100) {
-            console.warn(`GaugeChart - props "innerRadius" must be between 0 and ${RADIUS}`)
-          }
-          return true
-        },
+        default: 60
+      },
+      diff: {
+
+      },
+      center: {
+        type: Number,
+        default: 60
       },
       /**
        * Separator step, will display a separator each min + (n * separatorStep)
@@ -253,7 +339,11 @@
        */
       baseColor: {
         type: String,
-        default: '#DDDDDD',
+        default: '#fff',
+      },
+      mainRadius: {
+        type: Number,
+        default: 100
       },
       /**
        * Animation easing option
@@ -295,9 +385,9 @@
     },
     data() {
       return {
-        X_CENTER: X_CENTER,
-        Y_CENTER: Y_CENTER,
-        RADIUS: RADIUS,
+       /*  X_CENTER: this.mainRadius,
+        Y_CENTER: this.mainRadius, */
+        
         /**
          * Tweened value for the animation of the gauge
          * Starts at `min`
@@ -307,6 +397,15 @@
       }
     },
     computed: {
+      RADIUS() {
+        return this.mainRadius
+      },
+      X_CENTER () {
+      return this.center
+      },
+      Y_CENTER () {
+      return this.center
+      },
       /**
        * Height of the viewbox calculated by getting
        * - the lower y between the center and the start and end angle
@@ -315,12 +414,12 @@
        */
       height() {
         const { endAngle, startAngle } = this
-        const { y: yStart } = polarToCartesian(RADIUS, startAngle)
-        const { y: yEnd } = polarToCartesian(RADIUS, endAngle)
+        const { y: yStart } = polarToCartesian(this.X_CENTER, this.Y_CENTER, this.RADIUS, startAngle)
+        const { y: yEnd } = polarToCartesian(this.X_CENTER, this.Y_CENTER, this.RADIUS, endAngle)
 
         return Math.abs(endAngle) <= 180 && Math.abs(startAngle) <= 180
-          ? Math.max(Y_CENTER, yStart, yEnd)
-          : RADIUS * 2
+          ? Math.max(this.Y_CENTER, yStart, yEnd)
+          : this.RADIUS * 2
       },
       /**
        * d property of the path of the base gauge (the colored one)
@@ -329,7 +428,7 @@
       basePath() {
         const { startAngle, endAngle } = this
 
-        return describePath(RADIUS, startAngle, endAngle)
+        return describePath(this.X_CENTER, this.Y_CENTER, this.RADIUS, startAngle, endAngle)
       },
      
       /**
@@ -340,7 +439,12 @@
       gaugePath() {
         const { endAngle, getAngle, tweenedValue } = this
 
-        return describePath(RADIUS, getAngle(tweenedValue), endAngle)
+        return describePath(this.X_CENTER, this.Y_CENTER, this.RADIUS, getAngle(tweenedValue), endAngle)
+      },
+      gaugePathCover() {
+        const { endAngle, getAngle, tweenedValue } = this
+
+        return describePathCover(this.mainRadius, this.innerRadius, this.X_CENTER, this.Y_CENTER, this.RADIUS, getAngle(tweenedValue), endAngle)
       },
       /**
        * Total angle of the gauge
@@ -383,7 +487,7 @@
             const angle = getAngle(i)
             const halfAngle = separatorThickness / 2
 
-            paths.push(describePath(RADIUS + 2, angle - halfAngle, angle + halfAngle))
+            paths.push(describePath(this.X_CENTER, this.Y_CENTER, this.RADIUS + 2, angle - halfAngle, angle + halfAngle))
           }
 
           return paths
@@ -406,8 +510,8 @@
 
           for (i; i < max + scaleInterval; i += scaleInterval) {
             const angle = getAngle(i)
-            const startCoordinate = polarToCartesian(innerRadius + 32, angle)
-            const endCoordinate = polarToCartesian(innerRadius + 30, angle)
+            const startCoordinate = polarToCartesian(this.X_CENTER, this.Y_CENTER, innerRadius + 32, angle)
+            const endCoordinate = polarToCartesian(this.X_CENTER, this.Y_CENTER, innerRadius + 30, angle)
 
             lines.push({
               xS: startCoordinate.x,
@@ -424,6 +528,7 @@
       },
     },
     watch: {
+     
       /**
        * Watch the value and tween it to make an animation
        * If value < min, used value will be min
@@ -462,8 +567,14 @@
       },
     },
     methods: {
+      validateRaduis () {
+        if (this.innerRadius < 0 || this.innerRadius > this.mainRadius) {
+          console.warn(`GaugeChart - props "innerRadius" must be between 0 and ${this.RADIUS}`)
+        }
+        return true
+      },       
       basePathM(startAngle, endAngle) {
-        return describePath(RADIUS, startAngle, endAngle)
+        return describePath(this.X_CENTER, this.Y_CENTER, this.RADIUS, startAngle, endAngle)
       },
       /**
        * Get an angle for a value

@@ -70,12 +70,12 @@
       return {
         startAngle: -130,
         endAngle: 130,
-        value: 620,
+        value:700,
         separatorStep: 0,
         min: 0,
         max: 999,
         scale: 5,
-        innerRadius: 70,
+        innerRadius: 75,
         mainRadius: 114,
         separatorThickness: 4,
         baseColor: '#fff',
@@ -90,24 +90,7 @@
 
         return [easingFct, easingType].join('.')
       },
-      /**
-       * Text to display according to the random value
-       * @type {String}
-       */
-      text() {
-        const { random } = this
-
-        if (random < 25) {
-          return 'Very Bad 🙁'
-        }
-        if (random < 50) {
-          return 'Pretty ok 😶'
-        }
-        if (random < 75) {
-          return 'Gets nice 🙂'
-        }
-        return 'Super good 😄'
-      }
+      
     },
     /**
      * Change the random value for the example gauges
