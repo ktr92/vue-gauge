@@ -135,6 +135,21 @@
         <slot />
       </foreignObject>
     </svg>
+
+    <div id="taho-overlay" v-if="isValue">
+      <div 
+        v-for="(step, index) in stepsCoords" 
+        :key="step.x" 
+        class="taho-overlay-onchart-digit" 
+        :style="{'left': step.x + 'px', 'top': step.y + 'px'}"
+      >{{ gaugeColor[index].offset }}</div>
+      
+      <div id="taho-overlay-main-digit">{{ value }}</div>
+      <div id="taho-overlay-description"> 
+        <span>{{ desctext }}</span>
+        <i class="icon pi-exclamation-circle pi"></i> 
+      </div>
+  </div>
   </div>
 </template>
 
@@ -166,6 +181,45 @@
       y: ycenter + (radius * Math.sin(angleInRadians)),
     }
   }
+  function polarToCartesianPoint(xcenter, ycenter, radius, angle) {
+    const angleInRadians = (angle - 90) * Math.PI / 180
+
+    const x =  xcenter + (radius * Math.cos(angleInRadians))
+    const y = ycenter + (radius * Math.sin(angleInRadians))
+
+    if (x > 90) {
+      if (y > 90) {
+        // right bottom
+        return {
+          x: x + 10,
+          y: y
+        }  
+      }
+      else {
+        // right top
+        return {
+          x: x,
+          y: y - 20
+        }  
+      }
+    }
+    else {
+       if (y > 130) {
+        // left bottom
+        return {
+          x: x - 25,
+          y: y + 5
+        }  
+      }
+      else {
+        // left top
+        return {
+          x: x - 35,
+          y: y - 5
+        }  
+      }
+    }
+  }
 
   /**
    * Describe a gauge path according
@@ -174,6 +228,7 @@
    * @param   {Number} endAngle   - in degre
    * @returns {String}            - d property of the path
    */
+  
   function describePath(xcenter, ycenter, radius, startAngle, endAngle) {
     const start = polarToCartesian(xcenter, xcenter, radius, endAngle)
     const end = polarToCartesian(xcenter, xcenter, radius, startAngle)
@@ -397,6 +452,17 @@
       }
     },
     computed: {
+      desctext () {
+        if (this.value <= 179) {
+           return 'минимум';
+        } else if (this.value <= 623) {
+            return 'низкий';
+        } else if (this.value <= 912) {
+            return 'средний';
+        } else {
+            return 'высокий';
+        } 
+      },
       RADIUS() {
         return this.mainRadius
       },
@@ -405,6 +471,14 @@
       },
       Y_CENTER () {
       return this.center
+      },
+      steps () {
+        return this.gaugeColor.map(item => item.offset)
+      },
+      stepsCoords () {
+        return this.gaugeColor.map((item, index) => this.basePoint(
+            this.getAngle(item.offset), 
+            this.getAngle(index >= this.gaugeColor.length - 1 ? this.max : this.gaugeColor[index + 1].offset)))
       },
       /**
        * Height of the viewbox calculated by getting
@@ -576,6 +650,9 @@
       basePathM(startAngle, endAngle) {
         return describePath(this.X_CENTER, this.Y_CENTER, this.RADIUS, startAngle, endAngle)
       },
+      basePoint(startAngle, endAngle) {
+        return polarToCartesianPoint(this.X_CENTER, this.Y_CENTER, this.RADIUS, startAngle)
+      },
       /**
        * Get an angle for a value
        * @param   {Number} value
@@ -596,6 +673,44 @@
   .gauge {
     width: 100%;
     height: 100%;
+    position: relative;
   }
+  #taho-overlay {
+    height: 240px;
+    position: absolute;
+    width: 240px;
+    left: 0;
+    top: 0;
+  }
+ .taho-overlay-onchart-digit {
+    color: gray;
+    font-size: 12px;
+    position: absolute;
+}
+  #taho-overlay-main-digit {
+    font-size: 48px;
+    font-weight: 500;
+    top: 50%;
+        color: #000;
+    left: 50%;
+        transform: translate(-50%, -50%);
+display: inline-block;
+    position: absolute;
+    text-align: center;
+}
+
+#taho-overlay-description {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    color: #000;
+    left: 20px;
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    left: calc(50%);
+    transform: translate(-50%, 0);
+    bottom: 30px;
+}
   
 </style>
