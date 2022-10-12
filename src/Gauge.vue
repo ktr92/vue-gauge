@@ -1,8 +1,12 @@
 <template>
-  <div class="gauge" :style="{maxWidth: `${RADIUS * 2 + diff*3 + 'px'}`}">
+  <div class="gauge" :style="[
+    maxWidth,
+    marginTop,
+    outer ? {left: `calc(50% + ${diff/outer}px)`} : {}
+  ]">
     <svg
       v-if="height"
-      :viewBox="`0 0 ${RADIUS * 2 - diff} ${RADIUS * 2 - diff}`" height="100%" width="100%"
+      :viewBox="`0 0 ${RADIUS * 2} ${RADIUS * 2}`" 
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
@@ -346,7 +350,12 @@
         default: 60
       },
       diff: {
-
+      type: Number,
+        default: 0
+      },
+      outer: {
+        type: Number,
+        default: 0
       },
       center: {
         type: Number,
@@ -449,6 +458,7 @@
          * @type {Number}
          */
         tweenedValue: this.min,
+       
       }
     },
     computed: {
@@ -462,6 +472,12 @@
         } else {
             return 'высокий';
         } 
+      },
+      maxWidth () {
+      return {maxWidth: `${this.RADIUS * 2 - this.diff/2 + 'px'}`}
+      },
+      marginTop() {
+        return {marginTop: `-${ this.diff + this.outer/2 }px`}
       },
       RADIUS() {
         return this.mainRadius
