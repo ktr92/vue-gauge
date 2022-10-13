@@ -350,7 +350,7 @@
         default: 60
       },
       diff: {
-      type: Number,
+        type: Number,
         default: 0
       },
       outer: {

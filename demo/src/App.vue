@@ -10,23 +10,19 @@
           class="customizable-gauge tachometer-main"
           :start-angle="parseInt(startAngle || 130)"
           :end-angle="parseInt(endAngle || -130)"
-          :value="parseInt(value)"
+          :value="parseInt(mainGauge.value)"
+          :main-radius="parseInt(mainGauge.mainRadius)"
+          :center="parseInt(mainGauge.mainRadius)"
+          :inner-radius="parseInt(mainGauge.innerRadius)"
           :separator-step="parseInt(separatorStep)"
           :min="parseInt(min || 0)"
           :max="parseInt(max || 100)"
           :scale-interval="parseInt(scale)"
-          :inner-radius="parseInt(innerRadius)"
           :separator-thickness="parseInt(separatorThickness)"
           :base-color="baseColor"
-          :main-radius="parseInt(mainRadius)"
-          :center="parseInt(mainRadius)"
           :diff="0"
           :is-value="true"
-          :gauge-color="[ { offset: 0, color: '#FD2232' },
-          { offset: 150, color: '#FCEC68' },
-          { offset: 594, color: '#6FE566' },
-          { offset: 904, color: '#5BB657' },
-          { offset: 999, color: '#fff' }]"
+          :gauge-color="colors"
           :easing="easing"
         />
 
@@ -35,23 +31,20 @@
           class="customizable-gauge tachometer-scale"
           :start-angle="parseInt(startAngle || 130)"
           :end-angle="parseInt(endAngle || -130)"
-          :value="parseInt(value)"
+          :value="parseInt(mainGauge.outerGauge)"
           :separator-step="parseInt(separatorStep)"
           :min="parseInt(min || 0)"
           :max="parseInt(max || 100)"
           :scale-interval="parseInt(scale)"
-          :center="parseInt(mainRadius + 7)"
-          :inner-radius="parseInt('118')"
-          :main-radius="parseInt('122')"
-          :diff="4"
-          :outer="4"
+          :center="parseInt(outerGauge.mainRadius -1)"
+          :inner-radius="parseInt(outerGauge.innerRadius)"
+          :main-radius="parseInt(outerGauge.mainRadius)"
+          :diff="parseInt(outerGauge.diff)"
+          :outer="parseInt(outerGauge.outer)"
           :is-value="false"
           :separator-thickness="parseInt(separatorThickness)"
           :base-color="baseColor"
-          :gauge-color="[ { offset: 0, color: '#FD2232' },
-          { offset: 150, color: '#FCEC68' },
-          { offset: 594, color: '#6FE566' },
-          { offset: 904, color: '#5BB657' }]"
+          :gauge-color="colors"
           :easing="easing"
         />
 
@@ -69,15 +62,31 @@
     name: 'app',
     data() {
       return {
+        colors: [
+          { offset: 0, color: '#FD2232' },
+          { offset: 150, color: '#FCEC68' },
+          { offset: 594, color: '#6FE566' },
+          { offset: 904, color: '#5BB657' },
+          { offset: 999, color: '#fff' }
+        ],
+        mainGauge: {
+          value:700,
+          innerRadius: 75,
+          mainRadius: 114,
+        },
+        outerGauge: {
+          value:999,
+          innerRadius: 118,
+          mainRadius: 122,
+          diff: 4,
+          outer: 4
+        },
         startAngle: -130,
         endAngle: 130,
-        value:700,
         separatorStep: 0,
         min: 0,
         max: 999,
         scale: 5,
-        innerRadius: 75,
-        mainRadius: 114,
         separatorThickness: 4,
         baseColor: '#fff',
         easingFct: 'Circular',
