@@ -151,7 +151,13 @@
       <div id="taho-overlay-main-digit">{{ value }}</div>
       <div id="taho-overlay-description"> 
         <span>{{ desctext }}</span>
-        <i class="icon pi-exclamation-circle pi"></i> 
+        <a :href="link" target="_blank">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="11.9999" r="10" stroke="#4563FF" stroke-width="2"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M12.0102 19.5644C11.2778 19.5644 10.682 18.9895 10.682 18.2825C10.682 17.576 11.2778 17.0008 12.0102 17.0008C12.742 17.0008 13.3384 17.5761 13.3384 18.2825C13.3384 18.9895 12.742 19.5644 12.0102 19.5644Z" fill="#4563FF"/>
+          <path d="M12 14.9999V4.99994" stroke="#4563FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
       </div>
   </div>
   </div>
@@ -404,6 +410,10 @@
       baseColor: {
         type: String,
         default: '#fff',
+      },
+      link: {
+        type: String,
+        default: '#',
       },
       mainRadius: {
         type: Number,
@@ -727,6 +737,15 @@ display: inline-block;
     left: calc(50%);
     transform: translate(-50%, 0);
     bottom: 30px;
+}
+
+#taho-overlay-description span {
+  display: inline-block;
+    vertical-align: text-bottom;
+}
+#taho-overlay-description a {
+display: inline-block;
+    vertical-align: middle;
 }
   
 </style>
